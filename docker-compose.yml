@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # SERVIÇO 1: SEU GATEWAY
+  # SERVIÇO 1: GATEWAY
   gateway:
     build: ./gateway
     command: python -u gateway.py
@@ -9,7 +9,7 @@ services:
       - "9999:9999"
     depends_on:
       - engine-spark
-      - engine-mpi # Adicionamos a dependência da nova engine
+      - engine-mpi 
 
   # SERVIÇO 2: ENGINE SPARK
   engine-spark:
@@ -23,11 +23,11 @@ services:
 
   # SERVIÇO 3: ENGINE OMP/MPI (A NOVA!)
   engine-mpi:
-    build: ./OMP_MPI # Constrói a imagem a partir da pasta OMP_MPI/
+    build: ./OMP_MPI 
     ports:
-      - "6666:6666" # Expõe a porta 6666
+      - "6666:6666" 
     environment:
-      - OMP_NUM_THREADS=2 # Define as variáveis de ambiente
+      - OMP_NUM_THREADS=2
       - NPROCS=3
 
   # SERVIÇO 4: O MASTER DO SPARK
