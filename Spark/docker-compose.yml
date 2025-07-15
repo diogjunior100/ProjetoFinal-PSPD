@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  spark-master:
+    image: bitnami/spark:3.5.0
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+    ports:
+      - "7077:7077"       # Porta do cluster
+      - "8080:8080"       # UI do Spark Master
+
+  spark-worker:
+    image: bitnami/spark:3.5.0
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    depends_on:
+      - spark-master
+
+  spark-server:
+    build:
+      context: ./spark-server
+    depends_on:
+      - spark-master
+    environment:
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "6000:6000"  # Porta do servidor socket
