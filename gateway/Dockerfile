@@ -7,4 +7,4 @@ COPY gateway.py .
 
 EXPOSE 9999
 
-CMD ["python", "gateway.py"]
+CMD ["python", "-u","gateway.py"]

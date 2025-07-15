@@ -12,4 +12,4 @@ COPY server.py .
 # Instala o pyspark
 RUN pip3 install pyspark
 
-CMD ["python3", "server.py"]
+CMD ["python3", "-u", "server.py"]

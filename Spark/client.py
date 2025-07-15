@@ -6,7 +6,7 @@ PORT = 6000
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     sock.connect((HOST, PORT))
-    powmin, powmax = 3, 10
+    powmin, powmax = 3, 4
     sock.sendall(struct.pack('ii', powmin, powmax))
 
     data = b""

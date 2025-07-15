@@ -1,10 +1,11 @@
 import socket
 import threading
 import itertools
+import struct
 
 ENGINE_ADDRESSES = [
-    ('engine-spark', 8001),  # Nome do serviço da engine Spark
-    ('engine-mpi', 8002)     # Nome do serviço da engine MPI
+    ('engine-spark', 6000),   # Nome do serviço da engine Spark
+    ('engine-mpi', 6666)     # Nome do serviço da engine MPI
 ]
 
 GATEWAY_HOST = '0.0.0.0'
@@ -14,21 +15,43 @@ GATEWAY_PORT = 9999
 engine_selector = itertools.cycle(ENGINE_ADDRESSES)
 
 def handle_client(client_socket):
-    """Lida com a conexão de um cliente, redirecionando-a para uma engine."""
+    """Lida com a conexão de um cliente, traduzindo o protocolo se necessário."""
     try:
-        request = client_socket.recv(4096)
-        if not request:
-            print("[Gateway] Cliente desconectou sem enviar dados.")
+        # 1. Recebe os dados BINÁRIOS do cliente final
+        request_bytes = client_socket.recv(8)
+        if not request_bytes:
             return
 
-        print(f"[Gateway] Recebeu {len(request)} bytes. Redirecionando...")
+        # --- NOVA LÓGICA DE TRADUÇÃO ---
+
+        # 2. Seleciona a próxima engine (Round-Robin)
         target_engine_addr = next(engine_selector)
         print(f"[Gateway] Encaminhando requisição para a engine em {target_engine_addr}")
 
+        # 3. Decide o formato do payload baseado no nome da engine
+        if target_engine_addr[0] == 'engine-mpi':
+            # Se for a engine MPI, desempacota os bytes e re-empacota como TEXTO
+            powmin, powmax = struct.unpack('ii', request_bytes)
+            payload = f"{powmin},{powmax}".encode('utf-8')
+            print(f"[Gateway] Traduzindo para formato TEXTO para Engine MPI: '{payload.decode()}'")
+        else:
+            # Se for a engine Spark (ou qualquer outra), mantém o formato BINÁRIO
+            payload = request_bytes
+            print("[Gateway] Mantendo formato BINÁRIO para Engine Spark.")
+
+        # 4. Conecta na engine e envia o payload no formato correto
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as engine_socket:
             engine_socket.connect(target_engine_addr)
-            engine_socket.sendall(request)
-            response_from_engine = engine_socket.recv(4096)
+            engine_socket.sendall(payload) # Envia o payload traduzido ou original
+
+            # 5. Recebe a resposta e envia de volta (sem alterações)
+            response_from_engine = b""
+            while True:
+                part = engine_socket.recv(4096)
+                if not part:
+                    break
+                response_from_engine += part
+
             client_socket.sendall(response_from_engine)
             print(f"[Gateway] Resposta da engine enviada ao cliente.")
 

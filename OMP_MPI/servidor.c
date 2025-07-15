@@ -94,7 +94,7 @@ void iniciar_servidor(int rank, int nprocs) {
             enviar_metricas_para_log(todos_os_resultados, n_simulacoes, inet_ntoa(endereco_cliente.sin_addr));
             printf("Métricas de telemetria enviadas para o sistema de logs.\n");
 
-            // close(socket_cliente);
+            close(socket_cliente);
             printf("Conexão com o cliente fechada. Aguardando próximo.\n\n");
             
             free(relatorio_string);
