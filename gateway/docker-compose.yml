@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    ports:
+      - "9999:9999"
+    command: python -u gateway.py 
+    depends_on:
+      - engine-spark
+      - engine-mpi
+
+  engine-spark:
+    build:
+      context: .
+      dockerfile: Dockerfile.engine
+    command: python -u mock_engine.py 8001
+
+  engine-mpi:
+    build:
+      context: .
+      dockerfile: Dockerfile.engine
+    command: python -u mock_engine.py 8002
