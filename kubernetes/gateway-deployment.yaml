@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+      - name: gateway
+        image: pspd_gateway 
+        ports:
+        - containerPort: 9999
+        env:
+        - name: ELASTICSEARCH_URL
+          value: "http://quickstart-es-http:9200" 
+        - name: ELASTICSEARCH_API_KEY 
+          value: "VFRjbEVaZ0JXR3I0czBlbmpfbmU6NHdvblhDbDdRay00bDBmWVdudkxKZw==" 
