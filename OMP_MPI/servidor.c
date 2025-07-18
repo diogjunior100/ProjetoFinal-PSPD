@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <mpi/mpi.h>
 #include <time.h>
+#include <curl/curl.h>
 
 #include "cJSON/cJSON.h"
 #include "servidor.h"
@@ -14,6 +15,70 @@
 #define PORTA 6666
 #define TAM_BUFFER 1024
 #define MASTER 0
+
+
+void send_request_elastic(const char *url, const char *api_key) {
+    CURL *curl;
+    CURLcode res;
+
+    // Cria o primeiro JSON: { "index" : { "_index" : "pspd" } }
+    cJSON *index_cmd = cJSON_CreateObject();
+    cJSON *index_inner = cJSON_CreateObject();
+    cJSON_AddStringToObject(index_inner, "_index", "pspd");
+    cJSON_AddItemToObject(index_cmd, "index", index_inner);
+    char *index_cmd_str = cJSON_PrintUnformatted(index_cmd);
+
+    // Cria o segundo JSON: { "duration": "60", "strategy": "example_strategy" }
+    cJSON *doc = cJSON_CreateObject();
+    cJSON_AddStringToObject(doc, "duration", "60");
+    cJSON_AddStringToObject(doc, "strategy", "example_strategy");
+    char *doc_str = cJSON_PrintUnformatted(doc);
+
+    // Monta o corpo NDJSON
+    size_t payload_size = strlen(index_cmd_str) + strlen(doc_str) + 3;
+    char *payload = malloc(payload_size);
+    snprintf(payload, payload_size, "%s\n%s\n", index_cmd_str, doc_str);
+
+    // Prepara libcurl
+    char auth_header[512];
+    snprintf(auth_header, sizeof(auth_header), "Authorization: ApiKey %s", api_key);
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+
+    if (curl) {
+        struct curl_slist *headers = NULL;
+        headers = curl_slist_append(headers, auth_header);
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, stdout);
+
+        res = curl_easy_perform(curl);
+        if (res != CURLE_OK) {
+            fprintf(stderr, "\nErro na requisição: %s\n", curl_easy_strerror(res));
+        }
+
+        // Libera recursos
+        curl_slist_free_all(headers);
+        curl_easy_cleanup(curl);
+    }
+
+    curl_global_cleanup();
+
+    // Libera memória alocada
+    cJSON_Delete(index_cmd);
+    cJSON_Delete(doc);
+    free(index_cmd_str);
+    free(doc_str);
+    free(payload);
+}
 
 void iniciar_servidor(int rank, int nprocs) {
     int socket_servidor, socket_cliente;
@@ -90,9 +155,14 @@ void iniciar_servidor(int rank, int nprocs) {
             write(socket_cliente, relatorio_string, strlen(relatorio_string));
             printf("Resultados enviados para o cliente.\n");
 
-            // NOVO: Envia as métricas detalhadas para o log (stdout) em formato JSON
+            // Envia as métricas detalhadas para o log (stdout) em formato JSON
             enviar_metricas_para_log(todos_os_resultados, n_simulacoes, inet_ntoa(endereco_cliente.sin_addr));
             printf("Métricas de telemetria enviadas para o sistema de logs.\n");
+
+            const char *url = "https://localhost:9200/pspd";
+            const char *api_key = "elastic";
+             
+            send_request_elastic(url, api_key);
 
             close(socket_cliente);
             printf("Conexão com o cliente fechada. Aguardando próximo.\n\n");

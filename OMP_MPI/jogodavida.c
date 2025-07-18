@@ -1,6 +1,5 @@
 #include "jogodavida.h"
-#include <stdlib.h> // Para MPI_PROC_NULL
-#include <omp.h>    // Para o #pragma
+#include <omp.h> 
 
 #define MASTER 0
 #define TAG_CIMA_PARA_BAIXO 0

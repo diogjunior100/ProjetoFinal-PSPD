@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
 COPY . .
 
 # Compila TODOS os arquivos .c necessários juntos
-RUN mpicc -o servidor_hibrido main.c servidor.c resultadosimulacao.c jogodavida.c cJSON/cJSON.c -fopenmp -lm
+RUN mpicc -o servidor_hibrido main.c servidor.c resultadosimulacao.c jogodavida.c cJSON/cJSON.c -fopenmp -lm -lcurl
 
 RUN chmod +x entrypoint.sh
 
