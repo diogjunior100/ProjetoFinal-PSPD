@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: engine-spark
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: engine-spark
+  template:
+    metadata:
+      labels:
+        app: engine-spark
+    spec:
+      containers:
+      - name: engine-spark
+        image: pspd_spark4-1:latest
+        imagePullPolicy: Never
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        ports:
+        - containerPort: 6000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: engine-spark
+spec:
+  selector:
+    app: engine-spark
+  ports:
+    - protocol: TCP
+      port: 6000
+      targetPort: 6000

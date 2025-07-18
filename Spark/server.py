@@ -73,13 +73,20 @@ def handle_client(conn, addr, sc):
         print(f"[*] Resposta enviada para {addr}")
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"[!] Erro ao lidar com o cliente {addr}: {e}")
     finally:
         conn.close()
         print(f"[-] Conexão com {addr} fechada.")
 
 def start_server(host='0.0.0.0', port=6000):
-    conf = SparkConf().setAppName("GameOfLife").setMaster("spark://spark-master:7077")
+    conf = SparkConf() \
+        .setAppName("GameOfLife") \
+        .setMaster("spark://prod-master-svc:7077") \
+        .set("spark.executor.memory", "4G") \
+        .set("spark.executor.cores", "2") \
+        .set("spark.executor.instances", "3")
     sc = SparkContext(conf=conf)
     sc.setLogLevel("WARN")
     print("[*] SparkContext criado e pronto.")

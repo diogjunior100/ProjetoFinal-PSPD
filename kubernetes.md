@@ -12,6 +12,16 @@ Verificar
 minikube status
 ```
 
+Carregar imagem do docker local no minikube
+
+```
+minikube image load pspd_mpi:latest
+```
+
+```
+kubectl port-forward service/gateway 9999:9999
+```
+
 ## Elastic Search
 
 - [ECK - Elastic Cloud on Kubernetes](https://www.elastic.co/pt/downloads/elastic-cloud-kubernetes)
@@ -38,3 +48,8 @@ curl -k -X POST "${ES_URL}/_bulk?pretty&pipeline=ent-search-generic-ingestion" \
 
 ## Gateway
 
+## Spark
+
+https://apache.github.io/spark-kubernetes-operator/
+
+kubectl apply -f https://raw.githubusercontent.com/apache/spark-kubernetes-operator/refs/tags/0.4.0/examples/prod-cluster-with-three-workers.yaml
