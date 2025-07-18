@@ -83,10 +83,10 @@ def handle_client(conn, addr, sc):
 def start_server(host='0.0.0.0', port=6000):
     conf = SparkConf() \
         .setAppName("GameOfLife") \
-        .setMaster("spark://prod-master-svc:7077") \
-        .set("spark.executor.memory", "4G") \
-        .set("spark.executor.cores", "2") \
-        .set("spark.executor.instances", "3")
+        .setMaster("spark://cluster-with-template-master-svc:7077")
+    #     .set("spark.executor.memory", "4G") \
+    #     .set("spark.executor.cores", "2") \
+    #     .set("spark.executor.instances", "3")
     sc = SparkContext(conf=conf)
     sc.setLogLevel("WARN")
     print("[*] SparkContext criado e pronto.")

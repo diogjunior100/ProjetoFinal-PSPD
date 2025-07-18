@@ -52,4 +52,11 @@ curl -k -X POST "${ES_URL}/_bulk?pretty&pipeline=ent-search-generic-ingestion" \
 
 https://apache.github.io/spark-kubernetes-operator/
 
-kubectl apply -f https://raw.githubusercontent.com/apache/spark-kubernetes-operator/refs/tags/0.4.0/examples/prod-cluster-with-three-workers.yaml
+$ helm repo add spark https://apache.github.io/spark-kubernetes-operator
+$ helm repo update
+$ helm install spark spark/spark-kubernetes-operator
+
+
+# kubectl apply -f https://raw.githubusercontent.com/apache/spark-kubernetes-operator/refs/tags/0.4.0/examples/prod-cluster-with-three-workers.yaml
+
+kubectl apply -f https://raw.githubusercontent.com/apache/spark-kubernetes-operator/refs/heads/main/examples/cluster-with-template.yaml
