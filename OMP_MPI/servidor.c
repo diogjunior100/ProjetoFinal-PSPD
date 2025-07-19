@@ -17,9 +17,10 @@
 #define MASTER 0
 
 
-void send_request_elastic(const char *url, const char *api_key) {
+void send_request_elastic(const char *url, const char *api_key, ResultadoSimulacao simulacao) {
     CURL *curl;
     CURLcode res;
+    long response_code;
 
     // Cria o primeiro JSON: { "index" : { "_index" : "pspd" } }
     cJSON *index_cmd = cJSON_CreateObject();
@@ -28,10 +29,24 @@ void send_request_elastic(const char *url, const char *api_key) {
     cJSON_AddItemToObject(index_cmd, "index", index_inner);
     char *index_cmd_str = cJSON_PrintUnformatted(index_cmd);
 
+    // Chars para conversão de numero para string
+    char buf_total_time[20];
+    char buf_tam_table[16];
+    char buf_mpi_procs[16];
+    char buf_omp_threads[16];
+
+    sprintf(buf_tam_table, "%d", simulacao.tam);
+    sprintf(buf_mpi_procs, "%d", simulacao.nprocs);
+    sprintf(buf_omp_threads, "%d", simulacao.nthreads);
+    sprintf(buf_total_time, "%.2f", simulacao.t_total*1000);
+
     // Cria o segundo JSON: { "duration": "60", "strategy": "example_strategy" }
     cJSON *doc = cJSON_CreateObject();
-    cJSON_AddStringToObject(doc, "duration", "60");
-    cJSON_AddStringToObject(doc, "strategy", "example_strategy");
+    cJSON_AddStringToObject(doc, "strategy", "MPI");
+    cJSON_AddStringToObject(doc, "tam", buf_tam_table);
+    cJSON_AddStringToObject(doc, "procs", buf_mpi_procs);
+    cJSON_AddStringToObject(doc, "threads", buf_omp_threads);
+    cJSON_AddStringToObject(doc, "duration_ms", buf_total_time);
     char *doc_str = cJSON_PrintUnformatted(doc);
 
     // Monta o corpo NDJSON
@@ -63,8 +78,15 @@ void send_request_elastic(const char *url, const char *api_key) {
         res = curl_easy_perform(curl);
         if (res != CURLE_OK) {
             fprintf(stderr, "\nErro na requisição: %s\n", curl_easy_strerror(res));
+        } else {
+            // Obtém o código de resposta HTTP
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+            if (response_code == 200) {
+                printf("\nRequisição bem-sucedida! Código de resposta: %ld\n", response_code);
+            } else {
+                printf("\nFalha na requisição. Código de resposta: %ld\n", response_code);
+            }
         }
-
         // Libera recursos
         curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
@@ -84,6 +106,10 @@ void iniciar_servidor(int rank, int nprocs) {
     int socket_servidor, socket_cliente;
     struct sockaddr_in endereco_servidor, endereco_cliente;
     socklen_t addr_size = sizeof(endereco_cliente);
+
+    // Configurações para conexão com o ElasticSearch
+    const char *url = "https://quickstart-es-http:9200/_bulk?pretty&pipeline=ent-search-generic-ingestion";
+    const char *api_key = "RDFaWUlKZ0JiZVd3a0pBa1FmYXM6aFdoc1dwQ1dTTFN0djVDZ0RkeENidw==";
 
     if (rank == MASTER) {
         socket_servidor = socket(AF_INET, SOCK_STREAM, 0);
@@ -142,6 +168,11 @@ void iniciar_servidor(int rank, int nprocs) {
             int tam = 1 << pow;
             ResultadoSimulacao resultado_atual = executar_simulacao(tam, rank, nprocs);
             if (rank == MASTER) {
+                // Formata double para char 
+                // char buffer[50]; 
+                // sprintf(buffer, "%.2f", resultado_atual.t_total*1000); 
+
+                send_request_elastic(url, api_key, resultado_atual);
                 todos_os_resultados[i] = resultado_atual;
             }
         }
@@ -158,12 +189,7 @@ void iniciar_servidor(int rank, int nprocs) {
             // Envia as métricas detalhadas para o log (stdout) em formato JSON
             enviar_metricas_para_log(todos_os_resultados, n_simulacoes, inet_ntoa(endereco_cliente.sin_addr));
             printf("Métricas de telemetria enviadas para o sistema de logs.\n");
-
-            const char *url = "https://localhost:9200/pspd";
-            const char *api_key = "elastic";
              
-            send_request_elastic(url, api_key);
-
             close(socket_cliente);
             printf("Conexão com o cliente fechada. Aguardando próximo.\n\n");
             
@@ -180,7 +206,7 @@ char* formatar_relatorio_final(ResultadoSimulacao* resultados, int n_resultados)
     strcpy(buffer_relatorio, "\n====================================================================================================\n");
     strcat(buffer_relatorio, "                                     RELATÓRIO DE EXECUÇÃO\n");
     strcat(buffer_relatorio, "====================================================================================================\n");
-    strcat(buffer_relatorio, "| TAM   | Procs | Threads | t_init (s) | t_comp (s) | t_fim (s)  | t_total (s)| Resultado |\n");
+    strcat(buffer_relatorio, "| TAM   | Procs | Threads | t_init (ms) | t_comp (ms) | t_fim (ms)  | t_total (ms)| Resultado |\n");
     strcat(buffer_relatorio, "|-------|-------|---------|------------|------------|------------|------------|-----------|\n");
 
     for (int i = 0; i < n_resultados; i++) {
