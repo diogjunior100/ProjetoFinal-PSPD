@@ -98,3 +98,8 @@ spec:
     spark.master.rest.enabled: "true"
     spark.master.rest.host: "0.0.0.0"
     spark.ui.reverseProxy: "true"
+    spark.executor.instances: "2"  # Number of executors
+    spark.executor.memory: "4G"    # Memory per executor
+    spark.executor.cores: "2"      # CPU cores per executor
+    spark.executor.memoryOverhead: "1G"  # Off-heap memory
+    spark.kubernetes.executor.limit.cores: "2"  # CPU limit

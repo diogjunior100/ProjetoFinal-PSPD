@@ -83,7 +83,9 @@ def handle_client(conn, addr, sc):
 def start_server(host='0.0.0.0', port=6000):
     conf = SparkConf() \
         .setAppName("GameOfLife") \
-        .setMaster("spark://cluster-with-template-master-svc:7077")
+        .setMaster("spark://cluster-with-template-master-svc:7077") \
+        .set("spark.driver.host", "engine-spark") \
+        .set("spark.driver.bindAddress", "0.0.0.0")
     #     .set("spark.executor.memory", "4G") \
     #     .set("spark.executor.cores", "2") \
     #     .set("spark.executor.instances", "3")
