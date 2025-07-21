@@ -29,24 +29,23 @@ void send_request_elastic(const char *url, const char *api_key, ResultadoSimulac
     cJSON_AddItemToObject(index_cmd, "index", index_inner);
     char *index_cmd_str = cJSON_PrintUnformatted(index_cmd);
 
-    // Chars para conversão de numero para string
-    char buf_total_time[20];
-    char buf_tam_table[16];
-    char buf_mpi_procs[16];
-    char buf_omp_threads[16];
+    // Coleta o time atual
+    time_t now = time(NULL);
+    struct tm *tm_info = gmtime(&now);  // use localtime(&now) para horário local
 
-    sprintf(buf_tam_table, "%d", simulacao.tam);
-    sprintf(buf_mpi_procs, "%d", simulacao.nprocs);
-    sprintf(buf_omp_threads, "%d", simulacao.nthreads);
-    sprintf(buf_total_time, "%.2f", simulacao.t_total*1000);
+    char timestamp[30];
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%SZ", tm_info);
 
     // Cria o segundo JSON: { "duration": "60", "strategy": "example_strategy" }
     cJSON *doc = cJSON_CreateObject();
     cJSON_AddStringToObject(doc, "strategy", "MPI");
-    cJSON_AddStringToObject(doc, "tam", buf_tam_table);
-    cJSON_AddStringToObject(doc, "procs", buf_mpi_procs);
-    cJSON_AddStringToObject(doc, "threads", buf_omp_threads);
-    cJSON_AddStringToObject(doc, "duration_ms", buf_total_time);
+    cJSON_AddStringToObject(doc, "timestamp", timestamp);
+    cJSON_AddNumberToObject(doc, "tam", simulacao.tam);
+    cJSON_AddNumberToObject(doc, "procs", simulacao.nprocs);
+    cJSON_AddNumberToObject(doc, "threads", simulacao.nthreads);
+    cJSON_AddNumberToObject(doc, "duration_ms", simulacao.t_total * 1000);
+
+    
     char *doc_str = cJSON_PrintUnformatted(doc);
 
     // Monta o corpo NDJSON
@@ -109,8 +108,8 @@ void iniciar_servidor(int rank, int nprocs) {
 
     // Configurações para conexão com o ElasticSearch
     const char *url = "https://quickstart-es-http:9200/_bulk?pretty&pipeline=ent-search-generic-ingestion";
-    const char *api_key = "RDFaWUlKZ0JiZVd3a0pBa1FmYXM6aFdoc1dwQ1dTTFN0djVDZ0RkeENidw==";
-
+    const char *api_key = "bGpyVEk1Z0JxMUgzdUM3WElmSGg6VEc0RzU5NmFSWFdROGhPaDcwWWJOUQ==";
+ 
     if (rank == MASTER) {
         socket_servidor = socket(AF_INET, SOCK_STREAM, 0);
         if (socket_servidor < 0) { perror("Erro ao criar socket"); MPI_Abort(MPI_COMM_WORLD, 1); }

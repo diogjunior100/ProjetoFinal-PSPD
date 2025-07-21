@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: engine-mpi
-        image: pspd_mpi9:latest
+        image: pspd_mpi1:latest
         imagePullPolicy: Never
         env:
         - name: OMP_NUM_THREADS

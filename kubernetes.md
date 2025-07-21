@@ -2,7 +2,8 @@
 Iniciar o minikube
 
 ```
-minikube start
+minikube start --cpus=12 --memory=10000 --addons=metrics,dns
+
 ```
 
 
@@ -28,6 +29,9 @@ kubectl port-forward service/gateway 9999:9999
 
 kubectl create -f https://download.elastic.co/downloads/eck/3.0.0/crds.yaml
 kubectl apply -f https://download.elastic.co/downloads/eck/3.0.0/operator.yaml
+
+
+kubectl get secret quickstart-es-elastic-user -o go-template='{{.data.elastic | base64decode}}'
 
 - [Deploy ElasticSearch](https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/elasticsearch-deployment-quickstart)
 
@@ -72,7 +76,7 @@ Gerar Api Key
 
 ```
 curl -k -X POST "https://localhost:9200/_bulk?pretty&pipeline=ent-search-generic-ingestion" \
-  -H "Authorization: ApiKey "RDFaWUlKZ0JiZVd3a0pBa1FmYXM6aFdoc1dwQ1dTTFN0djVDZ0RkeENidw=="" \
+  -H "Authorization: ApiKey "bGpyVEk1Z0JxMUgzdUM3WElmSGg6VEc0RzU5NmFSWFdROGhPaDcwWWJOUQ=="" \
   -H "Content-Type: application/json" \
   -d'
 { "index" : { "_index" : "pspd" } }

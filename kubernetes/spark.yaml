@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: engine-spark
-        image: pspd_spark4-6:latest
+        image: pspd_spark:latest
         imagePullPolicy: Never
         env:
         - name: PYTHONUNBUFFERED
